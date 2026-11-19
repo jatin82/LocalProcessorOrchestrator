@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#192921">
+  <title>Orchestrator | Process dashboard</title>
+  <link rel="icon" href="/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/dashboard.css">
+  <script type="module" src="/dashboard.js"></script>
+</head>
+<body>
+  <header class="topbar"><div class="top-inner">
+    <div class="brand"><img src="/mark.svg" alt="" width="31" height="31">Orchestrator</div>
+    <span class="top-divider"></span><span class="top-label">Process manager</span>
+    <span class="connection" id="connection"><i class="dot"></i><span id="connection-label">Connecting</span></span>
+  </div></header>
+  <main>
+    <div class="hero">
+      <div><p class="eyebrow"><span class="rule"></span> Local workspace</p>
+        <h1>Process dashboard</h1>
+        <p class="subtitle">Manage your applications and follow their output in one place.</p>
+      </div>
+      <button class="primary" id="add" disabled><b aria-hidden="true">+</b> Add application</button>
+    </div>
+    <noscript><p>This dashboard needs JavaScript to manage applications.</p></noscript>
+    <div id="notice" role="status" hidden></div>
+    <div id="workspace" hidden>
+      <section class="summary" aria-label="Workspace summary">
+        <div><span class="metric-label">Registered apps</span><strong id="total">0</strong></div>
+        <div><span class="metric-label"><i class="dot running"></i>Running</span><strong id="running">0</strong></div>
+        <div><span class="metric-label"><i class="dot stopped"></i>Stopped</span><strong id="stopped">0</strong></div>
+        <div><span class="metric-label"><i class="dot failed"></i>Failed</span><strong id="failed">0</strong></div>
+      </section>
+      <div class="columns">
+        <section class="panel library" aria-labelledby="apps-title">
+          <div class="panel-heading"><span class="panel-icon" aria-hidden="true">&#9638;</span><h2 id="apps-title">Applications</h2></div>
+          <div id="app-list"></div>
+          <div class="empty" id="empty-list">
+            <p class="empty-title">No applications yet</p>
+            <p>Add an application and its launch command to get started.</p>
+            <button type="button" class="secondary" id="first-add">Add your first app</button>
+          </div>
+        </section>
+        <section class="panel inspector" aria-labelledby="inspector-title">
+          <div class="panel-heading"><span class="panel-icon terminal-icon" aria-hidden="true">&gt;_</span><h2 id="inspector-title">Process console</h2></div>
+          <div class="detail" id="detail" hidden>
+            <div class="detail-title"><h3 id="app-name"></h3><span class="badge" id="app-status"></span></div>
+            <p class="entry" id="app-command"></p>
+            <p class="entry">Working directory: <span id="app-cwd"></span></p>
+            <p class="runtime-meta" id="app-meta"></p>
+            <div class="controls">
+              <button type="button" id="start" class="primary">Start</button>
+              <button type="button" id="stop" class="secondary">Stop</button>
+              <button type="button" id="restart" class="secondary">Restart</button>
+              <button type="button" id="edit" class="secondary" aria-describedby="edit-hint">Edit</button>
+              <a id="open-app" class="open-app" target="_blank" rel="noopener noreferrer" hidden>Open application &#8599;</a>
+              <button type="button" id="delete" class="quiet danger">Delete</button>
+            </div>
+            <p class="hint" id="edit-hint" hidden>Stop the application to edit its settings.</p>
+          </div>
+          <div class="empty inspector-empty" id="empty-detail">
+            <p class="empty-title">No application selected</p>
+            <p>Select an application to see its status and controls.</p>
+          </div>
+          <div class="console">
+            <div class="console-head"><span class="console-title"><span aria-hidden="true">&gt;_</span> Output logs</span>
+              <label class="follow"><input id="follow" type="checkbox" checked> Follow</label></div>
+            <div class="log-viewport" tabindex="0" role="region" aria-label="Application output logs" id="viewport">
+              <p id="log-placeholder">Waiting for an application.</p><div id="log-rows"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <footer><span class="foot-brand">Orchestrator</span><span>Single-host process manager</span></footer>
+  </main>
+  <dialog id="app-dialog" aria-labelledby="form-title">
+    <form id="app-form">
+      <p class="eyebrow">Application registry</p><h2 id="form-title">Add application</h2>
+      <p class="dialog-copy">Save the settings, then select Start when you're ready.</p>
+      <label for="name">Application name</label>
+      <input id="name" name="name" placeholder="My API" maxlength="80" required autofocus>
+      <label for="command">Command</label>
+      <input id="command" name="command" placeholder="node example/server.cjs" maxlength="4096" required spellcheck="false">
+      <label for="cwd">Working directory</label>
+      <input id="cwd" name="cwd" value="." maxlength="4096" required spellcheck="false" aria-describedby="cwd-hint">
+      <p class="hint" id="cwd-hint">Enter an existing folder on the server. Use an absolute path, or a path relative to <code id="root"></code>. A dot uses that folder itself.</p>
+      <label for="url">Application URL (optional)</label>
+      <input id="url" name="url" type="url" placeholder="http://localhost:3000" maxlength="2048" spellcheck="false">
+      <p class="hint">Adds an “Open application” link to the console.</p>
+      <p class="form-error" id="form-error" role="alert" hidden></p>
+      <div class="dialog-actions"><button type="button" class="secondary" id="cancel-form">Cancel</button><button type="submit" class="primary" id="save">Add application</button></div>
+    </form>
+  </dialog>
+  <dialog id="delete-dialog" aria-labelledby="delete-title">
+    <form id="delete-form">
+      <p class="eyebrow">Application registry</p><h2 id="delete-title">Delete application?</h2>
+      <p class="dialog-copy"><strong id="delete-name"></strong> will be stopped if running and removed from the dashboard. Its source files will not be deleted.</p>
+      <p class="form-error" id="delete-error" role="alert" hidden></p>
+      <div class="dialog-actions"><button type="button" class="secondary" id="cancel-delete" autofocus>Cancel</button><button type="submit" class="destructive" id="confirm-delete">Delete application</button></div>
+    </form>
+  </dialog>
+</body>
+</html>
